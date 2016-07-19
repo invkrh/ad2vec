@@ -6,7 +6,8 @@ scalaVersion := "2.11.8"
 
 libraryDependencies += "org.apache.spark" %% "spark-mllib" % "1.6.2"
 
-//libraryDependencies += "org.json4s" %% "json4s-native" % "3.4.0"
+libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "2.7.2" excludeAll ExclusionRule(organization = "javax.servlet")
 
+libraryDependencies += "org.scalactic" %% "scalactic" % "2.2.6"
 
-//libraryDependencies += "org.apache.spark" %% "spark-hive" % "1.6.2"
+libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
