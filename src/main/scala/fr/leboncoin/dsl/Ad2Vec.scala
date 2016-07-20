@@ -2,26 +2,35 @@ package fr.leboncoin.dsl
 
 import fr.leboncoin.dsl.common._
 import org.apache.spark.ml.feature.{StopWordsRemover, Tokenizer, Word2Vec}
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{SaveMode, DataFrame}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.udf
 
-class Ad2Vec(rawDataSetURL: String) {
+class Ad2Vec(corpusURL: String) {
 
   import Ad2Vec._
   import sqlContext.implicits._
 
-  def loadDataSet(removeStopWords: Boolean, replaceNum: Boolean): DataFrame = {
-    // Read raw data from S3 (decompression gz)
-    val raw = sqlContext.read.json(rawDataSetURL)
+  //TODO: efficient cache data
+  def loadCorpus(removeStopWords: Boolean, replaceNum: Boolean): DataFrame = {
 
-    // Remove punctuation
-    val puncRemoved = raw.select($"ad_id", regexp_replace($"body", "\\p{P}", "").as("body"))
+    /**
+     * Read corpus (parquet file) from S3
+     */
+    val raw = sqlContext.read.parquet(corpusURL)
 
-    // Tokenize
+    /**
+     * Remove punctuation
+     */
+    val punctuationRemoved = raw.select($"ad_id", regexp_replace($"body", "\\p{P}", "").as("body"))
+
+    /**
+     * Tokenize
+     */
     val tokenizer = new Tokenizer()
       .setInputCol("body")
-      .setOutputCol("raw_words")
-    val tokenized = tokenizer.transform(puncRemoved)
+      .setOutputCol("tokens")
+    val tokenized = tokenizer.transform(punctuationRemoved)
 
     /**
      * Stemming can be complex, candidate: snowball, lucene
@@ -38,34 +47,32 @@ class Ad2Vec(rawDataSetURL: String) {
       if (removeStopWords) {
         val remover = new StopWordsRemover()
           .setStopWords(stopWordsFR)
-          .setInputCol("raw_words")
-          .setOutputCol("words_with_empty")
+          .setInputCol("tokens")
+          .setOutputCol("words")
         remover.transform(tokenized)
       } else {
-        tokenized.withColumnRenamed("raw_words", "words_with_empty")
+        tokenized.withColumnRenamed("tokens", "words")
       }
 
     val emptyRemoved =
-      stopWordsRemoved.select(
-        $"ad_id",
-        rmEmptyUDF($"words_with_empty").as("words_without_empty"))
+      stopWordsRemoved.select($"ad_id",
+        rmEmptyUDF($"words").as("words"))
 
     /**
      * It also might be better not to remove numbers.
      */
     if (replaceNum)
-      emptyRemoved.select(
-        $"ad_id",
-        replaceSingleNum($"words_without_empty").as("words"))
+      emptyRemoved.select($"ad_id",
+        replaceSingleNum($"words").as("words"))
     else
-      emptyRemoved.withColumnRenamed("words_without_empty", "words")
+      emptyRemoved
   }
 
-  def run() = {
-    val dataSet = loadDataSet(removeStopWords = false, replaceNum = false)
+  def run(modelURL: Option[String] = None): DataFrame = {
+    val dataSet = loadCorpus(removeStopWords = false, replaceNum = false)
     val word2Vec = new Word2Vec()
       .setInputCol("words")
-      .setOutputCol("result")
+      .setOutputCol("vec")
       .setVectorSize(100)
       .setMinCount(5)
       .setNumPartitions(20)
@@ -73,26 +80,43 @@ class Ad2Vec(rawDataSetURL: String) {
       .setWindowSize(5)
       .setMaxIter(1)
     val model = word2Vec.fit(dataSet)
-    model.transform(loadDataSet(removeStopWords = true, replaceNum = false))
+    modelURL.foreach(url => model.save(url + s"/${model.uid}"))
+    model.transform(loadCorpus(removeStopWords = true, replaceNum = false))
+      .select("ad_id", "vec")
   }
 }
 
 object Ad2Vec {
-  val rmEmptyUDF =
-    sqlContext.udf.register("removeEmpty", (xs: Seq[String]) => xs.filter(_.nonEmpty))
 
-  val replaceSingleNum =
-    sqlContext.udf.register("removeEmpty", (xs: Seq[String]) =>
-      xs.map(x => if (x.matches("\\d+")) "NUM" else x))
+  val rmEmptyUDF = udf {
+    (xs: Seq[String]) => xs.filter(_.nonEmpty)
+  }
 
-  lazy val stopWordsFR = {
+  val replaceSingleNum = udf {
+    (xs: Seq[String]) => xs.map(x => if (x.matches("\\d+")) "NUM" else x)
+  }
+
+  lazy val stopWordsFR: Array[String] = {
     val is = getClass.getResourceAsStream(s"/stopwords/french.txt")
     scala.io.Source.fromInputStream(is)(scala.io.Codec.UTF8).getLines().toArray
   }
 
+  def createCorpus(rawURL: String, corpusURL: String): Unit = {
+    sqlContext.read.json(rawURL)
+      .select("ad_id", "body")
+      .write.mode(SaveMode.Overwrite)
+      .parquet(corpusURL)
+  }
+
+  def result(
+    corpusURL: String,
+    modelURL: Option[String] = None,
+    resultURL: Option[String] = None): DataFrame = {
+    val resDF = new Ad2Vec(corpusURL).run(modelURL)
+    resultURL foreach resDF.write.mode(SaveMode.Overwrite).parquet
+    resDF
+  }
+
   def main(args: Array[String]) {
-    require(args.length == 1)
-    val rawDataSetURL = args.head
-    new Ad2Vec(rawDataSetURL).run()
   }
 }
