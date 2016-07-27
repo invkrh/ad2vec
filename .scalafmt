@@ -1,0 +1,6 @@
+# Example .scalafmt, comments are supported.
+--style default
+--maxColumn 80
+--javaDocs
+--continuationIndentDefnSite 2
+--continuationIndentCallSite 2

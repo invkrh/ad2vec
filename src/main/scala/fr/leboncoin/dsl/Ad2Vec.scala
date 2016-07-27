@@ -22,48 +22,44 @@ class Ad2Vec(corpusURL: String) {
     /**
      * Remove punctuation
      */
-    val punctuationRemoved = raw.select($"ad_id", regexp_replace($"body", "\\p{P}", "").as("body"))
+    val punctuationRemoved =
+      raw.select($"ad_id", regexp_replace($"body", "\\p{P}", "").as("body"))
 
     /**
      * Tokenize
      */
-    val tokenizer = new Tokenizer()
-      .setInputCol("body")
-      .setOutputCol("tokens")
+    val tokenizer = new Tokenizer().setInputCol("body").setOutputCol("tokens")
     val tokenized = tokenizer.transform(punctuationRemoved)
 
     /**
      * Stemming can be complex, candidate: snowball, lucene
      * Checkout maven repo for available jars
      */
-
     /**
      * Remove stopwords
-     * Note: train Word2Vec it is better not to remove stop words because the algorithm relies on
-     * the broader context of the sentence in order to produce high-quality word vectors.
-     * For this reason, we will make stop word removal optional in the functions.
+     * Note: when training Word2Vec, it is better not to remove stop words
+     * because the algorithm relies on the broader context of the sentence
+     * in order to produce high-quality word vectors. For this reason,
+     * we will make stop word removal optional in the functions.
      */
-    val stopWordsRemoved =
-      if (removeStopWords) {
-        val remover = new StopWordsRemover()
-          .setStopWords(stopWordsFR)
-          .setInputCol("tokens")
-          .setOutputCol("words")
-        remover.transform(tokenized)
-      } else {
-        tokenized.withColumnRenamed("tokens", "words")
-      }
+    val stopWordsRemoved = if (removeStopWords) {
+      val remover = new StopWordsRemover()
+        .setStopWords(stopWordsFR)
+        .setInputCol("tokens")
+        .setOutputCol("words")
+      remover.transform(tokenized)
+    } else {
+      tokenized.withColumnRenamed("tokens", "words")
+    }
 
     val emptyRemoved =
-      stopWordsRemoved.select($"ad_id",
-        rmEmptyUDF($"words").as("words"))
+      stopWordsRemoved.select($"ad_id", rmEmptyUDF($"words").as("words"))
 
     /**
      * It also might be better not to remove numbers.
      */
     if (replaceNum)
-      emptyRemoved.select($"ad_id",
-        replaceSingleNum($"words").as("words"))
+      emptyRemoved.select($"ad_id", replaceSingleNum($"words").as("words"))
     else
       emptyRemoved
   }
@@ -81,19 +77,20 @@ class Ad2Vec(corpusURL: String) {
       .setMaxIter(1)
     val model = word2Vec.fit(dataSet)
     modelURL.foreach(url => model.save(url + s"/${model.uid}"))
-    model.transform(loadCorpus(removeStopWords = true, replaceNum = false))
+    model
+      .transform(loadCorpus(removeStopWords = true, replaceNum = false))
       .select("ad_id", "vec")
   }
 }
 
 object Ad2Vec {
 
-  val rmEmptyUDF = udf {
-    (xs: Seq[String]) => xs.filter(_.nonEmpty)
+  val rmEmptyUDF = udf { (xs: Seq[String]) =>
+    xs.filter(_.nonEmpty)
   }
 
-  val replaceSingleNum = udf {
-    (xs: Seq[String]) => xs.map(x => if (x.matches("\\d+")) "NUM" else x)
+  val replaceSingleNum = udf { (xs: Seq[String]) =>
+    xs.map(x => if (x.matches("\\d+")) "NUM" else x)
   }
 
   lazy val stopWordsFR: Array[String] = {
@@ -102,21 +99,21 @@ object Ad2Vec {
   }
 
   def createCorpus(rawURL: String, corpusURL: String): Unit = {
-    sqlContext.read.json(rawURL)
+    sqlContext.read
+      .json(rawURL)
       .select("ad_id", "body")
-      .write.mode(SaveMode.Overwrite)
+      .write
+      .mode(SaveMode.Overwrite)
       .parquet(corpusURL)
   }
 
-  def result(
-    corpusURL: String,
-    modelURL: Option[String] = None,
-    resultURL: Option[String] = None): DataFrame = {
+  def result(corpusURL: String,
+             modelURL: Option[String] = None,
+             resultURL: Option[String] = None): DataFrame = {
     val resDF = new Ad2Vec(corpusURL).run(modelURL)
     resultURL foreach resDF.write.mode(SaveMode.Overwrite).parquet
     resDF
   }
 
-  def main(args: Array[String]) {
-  }
+  def main(args: Array[String]) {}
 }
