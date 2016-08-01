@@ -1,12 +1,12 @@
 package fr.leboncoin.dsl
 
 import com.amazonaws.auth.{AWSCredentialsProviderChain, EnvironmentVariableCredentialsProvider, SystemPropertiesCredentialsProvider}
-import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.SQLContext
 
 package object common {
 
-  def init() = {}
+  def init(): Unit = {}
 
   val sc = new SparkContext("local[*]", "ad2vec", new SparkConf)
 

@@ -46,7 +46,7 @@ This file is divided into 3 sections:
 
  <check level="error" class="org.scalastyle.file.FileTabChecker" enabled="true"></check>
 
- <check level="error" class="org.scalastyle.file.HeaderMatchesChecker" enabled="true">
+ <check level="error" class="org.scalastyle.file.HeaderMatchesChecker" enabled="false">
   <parameters>
    <parameter name="header"><![CDATA[/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -218,12 +218,15 @@ This file is divided into 3 sections:
 
  <check level="error" class="org.scalastyle.scalariform.ImportOrderChecker" enabled="true">
   <parameters>
-   <parameter name="groups">java,scala,3rdParty,spark</parameter>
+   <parameter name="groups">java,scala,3rdParty,lbc</parameter>
    <parameter name="group.java">javax?\..*</parameter>
    <parameter name="group.scala">scala\..*</parameter>
-   <parameter name="group.3rdParty">(?!org\.apache\.spark\.).*</parameter>
-   <parameter name="group.spark">org\.apache\.spark\..*</parameter>
+   <parameter name="group.3rdParty">(?!fr\.leboncoin\.).*</parameter>
+   <parameter name="group.lbc">fr\.leboncoin\..*</parameter>
   </parameters>
+     <customMessage>
+         Import should be in alphabetical order within a group
+     </customMessage>
  </check>
 
  <check level="error" class="org.scalastyle.scalariform.DisallowSpaceBeforeTokenChecker" enabled="true">

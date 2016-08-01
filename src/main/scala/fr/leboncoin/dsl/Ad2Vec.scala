@@ -1,17 +1,17 @@
 package fr.leboncoin.dsl
 
-import fr.leboncoin.dsl.common._
 import org.apache.spark.ml.feature.{StopWordsRemover, Tokenizer, Word2Vec}
-import org.apache.spark.sql.{SaveMode, DataFrame}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.udf
+import org.apache.spark.sql.{DataFrame, SaveMode}
+import org.apache.spark.sql.functions.{regexp_replace, udf}
+
+import fr.leboncoin.dsl.common.sqlContext
 
 class Ad2Vec(corpusURL: String) {
 
   import Ad2Vec._
   import sqlContext.implicits._
 
-  //TODO: efficient cache data
+  // TODO: efficient cache data
   def loadCorpus(removeStopWords: Boolean, replaceNum: Boolean): DataFrame = {
 
     /**
@@ -58,10 +58,12 @@ class Ad2Vec(corpusURL: String) {
     /**
      * It also might be better not to remove numbers.
      */
-    if (replaceNum)
+    if (replaceNum) {
       emptyRemoved.select($"ad_id", replaceSingleNum($"words").as("words"))
-    else
+    } else {
       emptyRemoved
+    }
+
   }
 
   def run(modelURL: Option[String] = None): DataFrame = {
