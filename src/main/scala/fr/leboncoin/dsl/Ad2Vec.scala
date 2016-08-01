@@ -22,8 +22,7 @@ class Ad2Vec(corpusURL: String) {
     /**
      * Remove punctuation
      */
-    val punctuationRemoved =
-      raw.select($"ad_id", regexp_replace($"body", "\\p{P}", "").as("body"))
+    val punctuationRemoved = raw.select($"ad_id", regexp_replace($"body", "\\p{P}", "").as("body"))
 
     /**
      * Tokenize
@@ -52,8 +51,7 @@ class Ad2Vec(corpusURL: String) {
       tokenized.withColumnRenamed("tokens", "words")
     }
 
-    val emptyRemoved =
-      stopWordsRemoved.select($"ad_id", rmEmptyUDF($"words").as("words"))
+    val emptyRemoved = stopWordsRemoved.select($"ad_id", rmEmptyUDF($"words").as("words"))
 
     /**
      * It also might be better not to remove numbers.
@@ -79,9 +77,7 @@ class Ad2Vec(corpusURL: String) {
       .setMaxIter(1)
     val model = word2Vec.fit(dataSet)
     modelURL.foreach(url => model.save(url + s"/${model.uid}"))
-    model
-      .transform(loadCorpus(removeStopWords = true, replaceNum = false))
-      .select("ad_id", "vec")
+    model.transform(loadCorpus(removeStopWords = true, replaceNum = false)).select("ad_id", "vec")
   }
 }
 
