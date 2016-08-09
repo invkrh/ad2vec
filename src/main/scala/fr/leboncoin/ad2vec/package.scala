@@ -1,24 +1,18 @@
 package fr.leboncoin
 
-import com.amazonaws.auth.{AWSCredentialsProviderChain, EnvironmentVariableCredentialsProvider,
-SystemPropertiesCredentialsProvider}
 import com.github.fommil.netlib.F2jBLAS
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector}
 import org.apache.spark.sql.SparkSession
 
 package object ad2vec {
 
-  def init() = {}
+  def init(): Unit = {}
 
   //////////////////////////////////////////////////////////////////////////////
   // Spark
   //////////////////////////////////////////////////////////////////////////////
 
-  val spark = SparkSession
-    .builder()
-    .appName("ad2vec")
-    .master("local[*]")
-    .getOrCreate()
+  val spark = SparkSession.builder().appName("ad2vec").master("local[*]").getOrCreate()
 
   //  val sc = spark.sparkContext
 
@@ -67,8 +61,7 @@ package object ad2vec {
           case dx: DenseVector =>
             axpy(a, dx, dy)
           case _ =>
-            throw new UnsupportedOperationException(
-              s"axpy doesn't support x type ${x.getClass}.")
+            throw new UnsupportedOperationException(s"axpy doesn't support x type ${x.getClass}.")
         }
       case _ =>
         throw new IllegalArgumentException(
@@ -101,7 +94,6 @@ package object ad2vec {
     val n = x.size
     f2jBLAS.daxpy(n, a, x.values, 1, y.values, 1)
   }
-
 
   /**
    * x = a * x

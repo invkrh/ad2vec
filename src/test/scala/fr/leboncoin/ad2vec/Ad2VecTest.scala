@@ -72,7 +72,7 @@ class Ad2VecTest extends FunSuite {
     )
 
     val ad2vec = new Ad2VecTest()
-    val resDF = ad2vec.weightedAverageDocVec(weighted, word2vec)
+    val resDF = ad2vec.weightedVec(weighted, word2vec)
       .select("id", "vec")
 
     val groundTruth = Map(
