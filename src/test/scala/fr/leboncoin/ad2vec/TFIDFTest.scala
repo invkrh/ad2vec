@@ -1,14 +1,13 @@
 package fr.leboncoin.ad2vec
 
+import scala.collection.mutable
 import scala.math.log
+
 import org.apache.spark.ml.feature.Tokenizer
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.functions.{col, expr, udf}
-import org.scalactic.TolerantNumerics
+import org.apache.spark.sql.functions.udf
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
-
-import scala.collection.mutable
 
 
 class TFIDFTest extends FunSuite with BeforeAndAfterEach {
@@ -25,7 +24,7 @@ class TFIDFTest extends FunSuite with BeforeAndAfterEach {
     tokenizer.transform(sentence)
   }
 
-  def testCase(tfidf: TFIDF) = {
+  def testCase(tfidf: TFIDF): Unit = {
     val termValueMap = term2Value(tfidf)
     val expected = 1d / 3 * log(4d / 3)
     assert(termValueMap("A") === expected)
@@ -38,11 +37,13 @@ class TFIDFTest extends FunSuite with BeforeAndAfterEach {
     val start = System.currentTimeMillis()
     val res = thunk
     val elapsedTime = System.currentTimeMillis() - start
+    // scalastyle:off println
     println("Time used: " + elapsedTime + " ms")
+    // scalastyle:on println
     (res, elapsedTime)
   }
 
-  def term2Value(tfidf: TFIDF) = {
+  def term2Value(tfidf: TFIDF): (String) => Double = {
     val result = tfidf.result()
     val getIndex = udf { v: SparseVector => v.indices }
     val getValue = udf { v: SparseVector => v.values }
