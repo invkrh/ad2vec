@@ -1,6 +1,6 @@
 # ad2vec
 
-[![Build Status](https://travis.schibsted.io/hao-ren/ad2vec.svg?token=qPtGbF8qKvoH1cLPprsf&branch=master)](https://travis.schibsted.io/hao-ren/ad2vec)
+[![Build Status](https://travis-ci.org/invkrh/ad2vec.svg?branch=master)](https://travis-ci.org/invkrh/ad2vec)
+[![codecov](https://codecov.io/gh/invkrh/ad2vec/branch/master/graph/badge.svg)](https://codecov.io/gh/invkrh/ad2vec)
 
-
-A side project to apply word2vec model to classified ads
+An extension based on word2vec and tfidf which assigne a vector to each document in a given corpus.
