@@ -1,31 +1,31 @@
-package fr.leboncoin.ad2vec
+package me.invkrh.ad2vec.core
 
 import org.apache.spark.ml.feature.{CountVectorizer, CountVectorizerModel, HashingTF, IDF}
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector}
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.udf
-import org.apache.spark.unsafe.hash.Murmur3_x86_32.hashUnsafeBytes
-import org.apache.spark.unsafe.types.UTF8String
 
-import fr.leboncoin.ad2vec.sqlContext.implicits._
+import me.invkrh.ad2vec.util.Hashing.hashingStr
 
 trait TFIDF {
 
   def inputCol: String
   def outputCol: String
-  def docs: DataFrame
 
+  def vocabSize: Int
   def term2index(term: String): Int
-  def termFrequency: DataFrame
+  protected def termFrequency(docs: DataFrame): DataFrame
 
-  require(
-    !docs.schema.fieldNames.contains("tf") &&
-      !docs.schema.fieldNames.contains("tf_normalized"),
-    "[tf] and [tf_normalized] are internal col name used in TFIDF"
-  )
+//  def docs: DataFrame
+//  require(
+//    !docs.schema.fieldNames.contains("tf") &&
+//      !docs.schema.fieldNames.contains("tf_normalized"),
+//    "[tf] and [tf_normalized] are internal col name used in TFIDF"
+//  )
 
   // TODO: Add more normalization method
-  val norm = udf { v: Vector =>
+  private val norm = udf { v: Vector =>
     v match {
       case sv: SparseVector =>
         val total = sv.values.sum
@@ -36,8 +36,8 @@ trait TFIDF {
     }
   }
 
-  def result(): DataFrame = {
-    val tf = termFrequency.withColumn("tf_normalized", norm($"tf"))
+  def transform(docs: DataFrame): DataFrame = {
+    val tf = termFrequency(docs).withColumn("tf_normalized", norm(col("tf")))
     val idf = new IDF().setInputCol("tf_normalized").setOutputCol(outputCol)
 
     idf
@@ -49,22 +49,23 @@ trait TFIDF {
 
 class CntVecTFIDF(
   val inputCol: String,
-  val outputCol: String,
-  val docs: DataFrame
+  val outputCol: String
 ) extends TFIDF {
 
   private var termIndex: Option[Map[String, Int]] = None
+
+  def vocabSize: Int = if (termIndex.isEmpty) 0 else termIndex.get.size
 
   def term2index(term: String): Int = {
     termIndex match {
       case Some(index) => index(term)
       case None =>
         throw new IllegalAccessException(
-          "term2index map is created after term frequency is computed")
+          "term2index map is created only after tfidf is computed")
     }
   }
 
-  lazy val termFrequency: DataFrame = {
+  protected def termFrequency(docs: DataFrame): DataFrame = {
 
     /**
      * cvModel contains a vocabulary list which may take a lot of memory
@@ -81,21 +82,21 @@ class CntVecTFIDF(
 
 class HashingTFIDF(
   val inputCol: String,
-  val outputCol: String,
-  val docs: DataFrame
+  val outputCol: String
 ) extends TFIDF {
 
-  val hashingTF = new HashingTF().setInputCol(inputCol).setOutputCol("tf")
+  private val hashingTF =
+    new HashingTF().setInputCol(inputCol).setOutputCol("tf")
+
+  def vocabSize: Int = hashingTF.getNumFeatures
 
   /**
    * Hash a term to an index (rely on HashingTF)
    */
   def term2index(term: String): Int = {
-    val seed = 42
-    val utf8 = UTF8String.fromString(term)
-    val hashNum = hashUnsafeBytes(utf8.getBaseObject, utf8.getBaseOffset, utf8.numBytes(), seed)
-    nonNegativeMod(hashNum, hashingTF.getNumFeatures)
+    hashingStr(term, hashingTF.getNumFeatures)
   }
 
-  @transient lazy val termFrequency: DataFrame = hashingTF.transform(docs)
+  protected def termFrequency(docs: DataFrame): DataFrame =
+    hashingTF.transform(docs)
 }

@@ -1,18 +1,16 @@
-package fr.leboncoin.ad2vec
+package me.invkrh.ad2vec.core
 
 import scala.collection.mutable
 import scala.math.log
 
 import org.apache.spark.ml.feature.Tokenizer
 import org.apache.spark.ml.linalg.SparseVector
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions.udf
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 
 
 class TFIDFTest extends FunSuite with BeforeAndAfterEach {
-
-  import spark.sqlContext.implicits._
 
   val testData = {
     val sentence = spark.createDataFrame(Seq(
@@ -24,8 +22,8 @@ class TFIDFTest extends FunSuite with BeforeAndAfterEach {
     tokenizer.transform(sentence)
   }
 
-  def testCase(tfidf: TFIDF): Unit = {
-    val termValueMap = term2Value(tfidf)
+  def testCase(tfidf: TFIDF, dataset: DataFrame): Unit = {
+    val termValueMap = term2Value(tfidf, dataset)
     val expected = 1d / 3 * log(4d / 3)
     assert(termValueMap("A") === expected)
     assert(termValueMap("B") === 0d)
@@ -43,8 +41,9 @@ class TFIDFTest extends FunSuite with BeforeAndAfterEach {
     (res, elapsedTime)
   }
 
-  def term2Value(tfidf: TFIDF): (String) => Double = {
-    val result = tfidf.result()
+  def term2Value(tfidf: TFIDF, dataset: DataFrame): (String) => Double = {
+    import dataset.sqlContext.implicits._
+    val result = tfidf.transform(dataset)
     val getIndex = udf { v: SparseVector => v.indices }
     val getValue = udf { v: SparseVector => v.values }
     val index2value = result.select(getIndex($"TFIDF"), getValue($"TFIDF"))
@@ -62,12 +61,12 @@ class TFIDFTest extends FunSuite with BeforeAndAfterEach {
   //  implicit val doubleEq = TolerantNumerics.tolerantDoubleEquality(epsilon)
 
   test("TFIDF with HashingTF") {
-    val tfidf = new HashingTFIDF("words", "TFIDF", testData)
-    testCase(tfidf)
+    val tfidf = new HashingTFIDF("words", "TFIDF")
+    testCase(tfidf, testData)
   }
 
   test("TFIDF with CountVectorizer") {
-    val tfidf = new CntVecTFIDF("words", "TFIDF", testData)
-    testCase(tfidf)
+    val tfidf = new CntVecTFIDF("words", "TFIDF")
+    testCase(tfidf, testData)
   }
 }

@@ -218,11 +218,11 @@ This file is divided into 3 sections:
 
  <check level="error" class="org.scalastyle.scalariform.ImportOrderChecker" enabled="true">
   <parameters>
-   <parameter name="groups">java,scala,3rdParty,lbc</parameter>
+   <parameter name="groups">java,scala,3rdParty,invkrh</parameter>
    <parameter name="group.java">javax?\..*</parameter>
    <parameter name="group.scala">scala\..*</parameter>
-   <parameter name="group.3rdParty">(?!fr\.leboncoin\.).*</parameter>
-   <parameter name="group.lbc">fr\.leboncoin\..*</parameter>
+   <parameter name="group.3rdParty">(?!me\.invkrh\.).*</parameter>
+   <parameter name="group.invkrh">me\.invkrh\..*</parameter>
   </parameters>
      <customMessage>
          Import should be in alphabetical order within a group
