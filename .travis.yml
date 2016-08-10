@@ -4,13 +4,10 @@ scala:
 jdk:
   - oraclejdk8
 
-script: sbt clean scalafmtTest compile:scalastyle coverage test:scalastyle
+script: sbt clean scalafmtTest compile:scalastyle test:scalastyle compile package coverage test coverageReport
 branches:
   only:
     - master
-
-script:
-  - sbt clean coverage test coverageReport
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

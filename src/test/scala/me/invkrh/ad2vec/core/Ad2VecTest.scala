@@ -7,7 +7,7 @@ import org.scalactic.TolerantNumerics
 import org.scalatest.FunSuite
 
 class Ad2VecTest extends FunSuite {
-  
+
   import spark.sqlContext.implicits._
 
   val word2Vec: Word2Vec = new Word2Vec()
