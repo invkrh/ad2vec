@@ -2,7 +2,7 @@ package me.invkrh.ad2vec.core
 
 import org.apache.spark.ml.feature.{StopWordsRemover, Word2Vec}
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector}
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.Row
 import org.scalactic.TolerantNumerics
 import org.scalatest.FunSuite
 

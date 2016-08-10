@@ -1,4 +1,4 @@
-package me.invkrh
+package me.invkrh.ad2vec
 
 import org.apache.spark.sql.SparkSession
 
