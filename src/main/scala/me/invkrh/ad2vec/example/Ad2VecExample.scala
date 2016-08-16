@@ -1,5 +1,6 @@
 package me.invkrh.ad2vec.example
 
+import com.amazonaws.auth.{AWSCredentialsProviderChain, EnvironmentVariableCredentialsProvider, SystemPropertiesCredentialsProvider}
 import org.apache.spark.ml.feature.Word2Vec
 import org.apache.spark.sql.{SaveMode, _}
 
@@ -7,25 +8,24 @@ import me.invkrh.ad2vec.core.Ad2Vec
 
 object Ad2VecExample {
 
-  val spark =
-    SparkSession.builder().appName("ad2vec").master("local[*]").getOrCreate()
+  val spark = SparkSession.builder().appName("ad2vec").master("local[*]").getOrCreate()
 
   /**
    * Efficient parquet committer
    */
-  //  sc.hadoopConfiguration.set(
-  //    "spark.sql.parquet.output.committer.class",
-  //    "org.apache.spark.sql.parquet.DirectParquetOutputCommitter")
+  spark.sparkContext.hadoopConfiguration.set(
+    "spark.sql.parquet.output.committer.class",
+    "org.apache.spark.sql.parquet.DirectParquetOutputCommitter")
 
   /**
-   * AWS credential
+   * Load AWS credential
    */
-  //  val chain =
-  //    new AWSCredentialsProviderChain(
-  //      new EnvironmentVariableCredentialsProvider,
-  //      new SystemPropertiesCredentialsProvider)
-  //  sc.hadoopConfiguration.set("fs.s3a.access.key", chain.getCredentials.getAWSAccessKeyId)
-  //  sc.hadoopConfiguration.set("fs.s3a.secret.key", chain.getCredentials.getAWSSecretKey)
+  val chain = new AWSCredentialsProviderChain(new EnvironmentVariableCredentialsProvider,
+                                              new SystemPropertiesCredentialsProvider)
+  spark.sparkContext.hadoopConfiguration
+    .set("fs.s3a.access.key", chain.getCredentials.getAWSAccessKeyId)
+  spark.sparkContext.hadoopConfiguration
+    .set("fs.s3a.secret.key", chain.getCredentials.getAWSSecretKey)
 
   /**
    * Convert json file to parquet file
@@ -59,11 +59,7 @@ object Ad2VecExample {
       .setMaxIter(1)
     val ad2vec = new Ad2Vec(w2v).setIdCol("ad_id").setDocCol("body")
     val model = ad2vec.fit(raw)
-
-    val processed =
-      ad2vec.textProcessing(raw, removeStopWords = true, replaceNum = false)
-
-    val resDF = model.transform(processed)
+    val resDF = model.transform(raw)
 
     resultURL foreach resDF.write.mode(SaveMode.Overwrite).parquet
     resDF

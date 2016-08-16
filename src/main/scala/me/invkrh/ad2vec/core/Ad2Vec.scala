@@ -15,12 +15,10 @@ import me.invkrh.ad2vec.algebra.BLAS
  * 4. Enumerate language
  * 5. Improve col name
  */
-class Ad2Vec private (private var idCol: String,
-                      private var docCol: String,
-                      private var language: String,
-                      private val word2vec: Word2Vec) {
-
-  def this(word2vec: Word2Vec) = this("id", "doc", "english", word2vec)
+trait Ad2VecBase {
+  var idCol: String = "id"
+  var docCol: String = "doc"
+  var language: String = "english"
 
   def setIdCol(idCol: String): this.type = {
     this.idCol = idCol
@@ -37,6 +35,12 @@ class Ad2Vec private (private var idCol: String,
     this
   }
 
+  def copyParamsOf[T <: Ad2VecBase](that: T): Unit = {
+    that.setIdCol(this.idCol)
+    that.setDocCol(this.docCol)
+    that.setLanguage(this.language)
+  }
+
   def textProcessing(corpus: DataFrame,
                      removeStopWords: Boolean,
                      replaceNum: Boolean = false): DataFrame = {
@@ -46,8 +50,8 @@ class Ad2Vec private (private var idCol: String,
     /**
      * Remove punctuation
      */
-    val punctuationRemoved = corpus
-      .select(col(idCol), regexp_replace(col(docCol), "\\p{P}", "").as(docCol))
+    val punctuationRemoved =
+      corpus.select(col(idCol), regexp_replace(col(docCol), "\\p{P}", "").as(docCol))
 
     /**
      * Tokenize
@@ -82,25 +86,25 @@ class Ad2Vec private (private var idCol: String,
       xs.map(x => if (x.matches("\\d+")) "NUM" else x)
     }
     if (replaceNum) {
-      stopWordsRemoved
-        .select(col(idCol), replaceSingleNum($"words").as("words"))
+      stopWordsRemoved.select(col(idCol), replaceSingleNum($"words").as("words"))
     } else {
       stopWordsRemoved
     }
   }
+}
 
+class Ad2Vec (val word2vec: Word2Vec) extends Ad2VecBase {
   def fit(dataSet: DataFrame): Ad2VecModel = {
-    val processed =
-      textProcessing(dataSet, removeStopWords = false, replaceNum = false)
-    new Ad2VecModel(word2vec.fit(processed))
+    val processed = textProcessing(dataSet, removeStopWords = false, replaceNum = false)
+    val model = new Ad2VecModel(word2vec.fit(processed))
+    model.copyParamsOf(this)
+    model
   }
 }
 
-private[core] class Ad2VecModel(model: Word2VecModel) {
+private[core] class Ad2VecModel(model: Word2VecModel) extends Ad2VecBase {
 
-  def average(weightedDoc: DataFrame,
-              dict: Map[String, (Vector, Int)],
-              dim: Int): DataFrame = {
+  def average(weightedDoc: DataFrame, dict: Map[String, (Vector, Int)], dim: Int): DataFrame = {
     val bDict = weightedDoc.sparkSession.sparkContext.broadcast(dict)
     val word2VecTFIDF = udf { (sentence: Seq[String], weights: Vector) =>
       if (sentence.isEmpty) {
@@ -130,10 +134,11 @@ private[core] class Ad2VecModel(model: Word2VecModel) {
    * The transform is performed by averaging all word vectors by the words' tfidf weight
    * in the document.
    *
-   * @param processed documents where all stop words are filtered
+   * @param raw raw documents data set
    * @return TFIDF weight-averaged document representation
    */
-  def transform(processed: DataFrame, tfidf: Option[TFIDF] = None): DataFrame = {
+  def transform(raw: DataFrame, tfidf: Option[TFIDF] = None): DataFrame = {
+    val processed = textProcessing(raw, removeStopWords = true, replaceNum = false)
     tfidf match {
       case Some(x) =>
         // Compute TFIDF weights
@@ -148,4 +153,5 @@ private[core] class Ad2VecModel(model: Word2VecModel) {
         model.transform(processed)
     }
   }
+
 }
