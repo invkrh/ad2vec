@@ -12,10 +12,7 @@ object Hashing {
   def hashingStr(term: String, nbBucket: Int): Int = {
     val seed = 42
     val utf8 = UTF8String.fromString(term)
-    val hashNum = hashUnsafeBytes(utf8.getBaseObject,
-                                  utf8.getBaseOffset,
-                                  utf8.numBytes(),
-                                  seed)
+    val hashNum = hashUnsafeBytes(utf8.getBaseObject, utf8.getBaseOffset, utf8.numBytes(), seed)
     nonNegativeMod(hashNum, nbBucket)
   }
 }

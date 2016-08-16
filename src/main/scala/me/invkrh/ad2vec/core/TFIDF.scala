@@ -60,8 +60,7 @@ class CntVecTFIDF(
     termIndex match {
       case Some(index) => index(term)
       case None =>
-        throw new IllegalAccessException(
-          "term2index map is created only after tfidf is computed")
+        throw new IllegalAccessException("term2index map is created only after tfidf is computed")
     }
   }
 
@@ -85,8 +84,7 @@ class HashingTFIDF(
   val outputCol: String
 ) extends TFIDF {
 
-  private val hashingTF =
-    new HashingTF().setInputCol(inputCol).setOutputCol("tf")
+  private val hashingTF = new HashingTF().setInputCol(inputCol).setOutputCol("tf")
 
   def vocabSize: Int = hashingTF.getNumFeatures
 

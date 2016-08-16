@@ -19,8 +19,7 @@ object BLAS {
           case dx: DenseVector =>
             axpy(a, dx, dy)
           case _ =>
-            throw new UnsupportedOperationException(
-              s"axpy doesn't support x type ${x.getClass}.")
+            throw new UnsupportedOperationException(s"axpy doesn't support x type ${x.getClass}.")
         }
       case _ =>
         throw new IllegalArgumentException(
@@ -64,8 +63,7 @@ object BLAS {
       case dx: DenseVector =>
         f2jBLAS.dscal(dx.values.length, a, dx.values, 1)
       case _ =>
-        throw new IllegalArgumentException(
-          s"scal doesn't support vector type ${x.getClass}.")
+        throw new IllegalArgumentException(s"scal doesn't support vector type ${x.getClass}.")
     }
   }
 }

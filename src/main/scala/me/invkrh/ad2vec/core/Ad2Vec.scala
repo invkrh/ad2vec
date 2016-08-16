@@ -93,7 +93,7 @@ trait Ad2VecBase {
   }
 }
 
-class Ad2Vec (val word2vec: Word2Vec) extends Ad2VecBase {
+class Ad2Vec(val word2vec: Word2Vec) extends Ad2VecBase {
   def fit(dataSet: DataFrame): Ad2VecModel = {
     val processed = textProcessing(dataSet, removeStopWords = false, replaceNum = false)
     val model = new Ad2VecModel(word2vec.fit(processed))

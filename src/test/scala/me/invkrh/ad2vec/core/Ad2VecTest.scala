@@ -30,8 +30,7 @@ class Ad2VecTest extends FunSuite {
         ))
       .toDF("id", "doc")
     val ad2vec = new Ad2Vec(word2Vec)
-    val df =
-      ad2vec.textProcessing(corpus, removeStopWords = true, replaceNum = false)
+    val df = ad2vec.textProcessing(corpus, removeStopWords = true, replaceNum = false)
     val res = df
       .select($"words")
       .rdd
@@ -59,15 +58,13 @@ class Ad2VecTest extends FunSuite {
       (2, Seq("C", "D", "A")) // 2, 4, 6
     ).map {
       case (id, words) =>
-        val (indices, values) =
-          (words.map(hash).toArray zip Array(id * 1d, id * 2d, id * 3d))
-            .sortBy(_._1)
-            .unzip // indices should be sorted for SparseVector
+        val (indices, values) = (words.map(hash).toArray zip Array(id * 1d, id * 2d, id * 3d))
+          .sortBy(_._1)
+          .unzip // indices should be sorted for SparseVector
         (id, words, new SparseVector(size, indices, values))
     }
 
-    val weighted =
-      spark.createDataFrame(weightedData).toDF("id", "words", "tfidf")
+    val weighted = spark.createDataFrame(weightedData).toDF("id", "words", "tfidf")
 
     weighted.show(false)
 

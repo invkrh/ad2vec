@@ -23,7 +23,7 @@ class BLASTest extends FunSuite {
       y
     }
   }
-  
+
   test("testScal for sparse vector") {
     val x = new SparseVector(5, Array(0, 1, 2, 3, 4), Array(1, 2, 3, 4, 5))
     val expected = new SparseVector(5, Array(0, 1, 2, 3, 4), Array(2, 4, 6, 8, 10))
@@ -32,7 +32,7 @@ class BLASTest extends FunSuite {
       x
     }
   }
-  
+
   test("testAxpy for sparse vector") {
     val y = Vectors.zeros(5) // DenseVector
     val x = new SparseVector(5, Array(0, 1, 2, 3, 4), Array(1, 2, 3, 4, 5))

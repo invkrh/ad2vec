@@ -9,15 +9,17 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions.udf
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 
-
 class TFIDFTest extends FunSuite with BeforeAndAfterEach {
 
   val testData = {
-    val sentence = spark.createDataFrame(Seq(
-      (0, "A B C"),
-      (1, "B C D"),
-      (2, "A B D")
-    )).toDF("id", "body")
+    val sentence = spark
+      .createDataFrame(
+        Seq(
+          (0, "A B C"),
+          (1, "B C D"),
+          (2, "A B D")
+        ))
+      .toDF("id", "body")
     val tokenizer = new Tokenizer().setInputCol("body").setOutputCol("words")
     tokenizer.transform(sentence)
   }
@@ -44,17 +46,20 @@ class TFIDFTest extends FunSuite with BeforeAndAfterEach {
   def term2Value(tfidf: TFIDF, dataset: DataFrame): (String) => Double = {
     import dataset.sqlContext.implicits._
     val result = tfidf.transform(dataset)
-    val getIndex = udf { v: SparseVector => v.indices }
-    val getValue = udf { v: SparseVector => v.values }
-    val index2value = result.select(getIndex($"TFIDF"), getValue($"TFIDF"))
+    val getIndex = udf { v: SparseVector =>
+      v.indices
+    }
+    val getValue = udf { v: SparseVector =>
+      v.values
+    }
+    val index2value = result
+      .select(getIndex($"TFIDF"), getValue($"TFIDF"))
       .rdd
       .flatMap { r: Row =>
-        r.getAs[mutable.WrappedArray[Int]](0)
-          .zip(r.getAs[mutable.WrappedArray[Double]](1))
-      }.collectAsMap()
-    ((s: String) => s.toLowerCase)
-      .andThen(tfidf.term2index)
-      .andThen(index2value)
+        r.getAs[mutable.WrappedArray[Int]](0).zip(r.getAs[mutable.WrappedArray[Double]](1))
+      }
+      .collectAsMap()
+    ((s: String) => s.toLowerCase).andThen(tfidf.term2index).andThen(index2value)
   }
 
   //  val epsilon = 1e-5f
