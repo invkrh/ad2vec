@@ -47,10 +47,7 @@ trait TFIDF {
   }
 }
 
-class CntVecTFIDF(
-  val inputCol: String,
-  val outputCol: String
-) extends TFIDF {
+class CntVecTFIDF(val inputCol: String, val outputCol: String) extends TFIDF {
 
   private var termIndex: Option[Map[String, Int]] = None
 
@@ -79,10 +76,7 @@ class CntVecTFIDF(
   }
 }
 
-class HashingTFIDF(
-  val inputCol: String,
-  val outputCol: String
-) extends TFIDF {
+class HashingTFIDF(val inputCol: String, val outputCol: String) extends TFIDF {
 
   private val hashingTF = new HashingTF().setInputCol(inputCol).setOutputCol("tf")
 

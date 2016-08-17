@@ -27,7 +27,8 @@ class Ad2VecTest extends FunSuite {
           (0, "Glad to meet you spark! You are awesome"),
           (1, "Suicide squad is wonderful"),
           (2, "Harley quinn is so cute")
-        ))
+        )
+      )
       .toDF("id", "doc")
     val ad2vec = new Ad2Vec(word2Vec)
     val df = ad2vec.textProcessing(corpus, removeStopWords = true, replaceNum = false)

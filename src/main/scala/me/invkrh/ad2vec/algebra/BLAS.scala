@@ -23,7 +23,8 @@ object BLAS {
         }
       case _ =>
         throw new IllegalArgumentException(
-          s"axpy only supports adding to a dense vector but got type ${y.getClass}.")
+          s"axpy only supports adding to a dense vector but got type ${y.getClass}."
+        )
     }
   }
 

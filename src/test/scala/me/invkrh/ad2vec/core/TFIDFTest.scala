@@ -12,6 +12,7 @@ import org.scalatest.{BeforeAndAfterEach, FunSuite}
 class TFIDFTest extends FunSuite with BeforeAndAfterEach {
 
   val testData = {
+    // format: off
     val sentence = spark
       .createDataFrame(
         Seq(
@@ -20,6 +21,7 @@ class TFIDFTest extends FunSuite with BeforeAndAfterEach {
           (2, "A B D")
         ))
       .toDF("id", "body")
+    // format: on
     val tokenizer = new Tokenizer().setInputCol("body").setOutputCol("words")
     tokenizer.transform(sentence)
   }

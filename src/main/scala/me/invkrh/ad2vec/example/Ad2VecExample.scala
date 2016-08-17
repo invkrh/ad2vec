@@ -1,6 +1,10 @@
 package me.invkrh.ad2vec.example
 
-import com.amazonaws.auth.{AWSCredentialsProviderChain, EnvironmentVariableCredentialsProvider, SystemPropertiesCredentialsProvider}
+import com.amazonaws.auth.{
+  AWSCredentialsProviderChain,
+  EnvironmentVariableCredentialsProvider,
+  SystemPropertiesCredentialsProvider
+}
 import org.apache.spark.ml.feature.Word2Vec
 import org.apache.spark.sql.{SaveMode, _}
 
@@ -15,13 +19,16 @@ object Ad2VecExample {
    */
   spark.sparkContext.hadoopConfiguration.set(
     "spark.sql.parquet.output.committer.class",
-    "org.apache.spark.sql.parquet.DirectParquetOutputCommitter")
+    "org.apache.spark.sql.parquet.DirectParquetOutputCommitter"
+  )
 
   /**
    * Load AWS credential
    */
-  val chain = new AWSCredentialsProviderChain(new EnvironmentVariableCredentialsProvider,
-                                              new SystemPropertiesCredentialsProvider)
+  val chain = new AWSCredentialsProviderChain(
+    new EnvironmentVariableCredentialsProvider,
+    new SystemPropertiesCredentialsProvider
+  )
   spark.sparkContext.hadoopConfiguration
     .set("fs.s3a.access.key", chain.getCredentials.getAWSAccessKeyId)
   spark.sparkContext.hadoopConfiguration

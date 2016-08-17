@@ -1,9 +1,5 @@
 # Example .scalafmt, comments are supported.
---style defaultWithAlign
+--style Intellij
 --maxColumn 100
 --javaDocs
---alignTokens true
---continuationIndentDefnSite 2
---continuationIndentCallSite 2
---binPackParentConstructors true
---alignByArrowEnumeratorGenerator true
+

@@ -56,7 +56,8 @@ trait Ad2VecBase {
     /**
      * Tokenize
      */
-    val tokenizer = new Tokenizer().setInputCol(docCol).setOutputCol("tokens")
+    val tokenizer =
+      new Tokenizer().setInputCol(docCol).setOutputCol("tokens")
     val tokenized = tokenizer.transform(punctuationRemoved)
 
     /**
@@ -95,7 +96,8 @@ trait Ad2VecBase {
 
 class Ad2Vec(val word2vec: Word2Vec) extends Ad2VecBase {
   def fit(dataSet: DataFrame): Ad2VecModel = {
-    val processed = textProcessing(dataSet, removeStopWords = false, replaceNum = false)
+    val processed =
+      textProcessing(dataSet, removeStopWords = false, replaceNum = false)
     val model = new Ad2VecModel(word2vec.fit(processed))
     model.copyParamsOf(this)
     model
@@ -138,7 +140,8 @@ private[core] class Ad2VecModel(model: Word2VecModel) extends Ad2VecBase {
    * @return TFIDF weight-averaged document representation
    */
   def transform(raw: DataFrame, tfidf: Option[TFIDF] = None): DataFrame = {
-    val processed = textProcessing(raw, removeStopWords = true, replaceNum = false)
+    val processed =
+      textProcessing(raw, removeStopWords = true, replaceNum = false)
     tfidf match {
       case Some(x) =>
         // Compute TFIDF weights
