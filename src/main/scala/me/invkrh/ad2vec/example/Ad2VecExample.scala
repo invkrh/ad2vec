@@ -1,14 +1,9 @@
 package me.invkrh.ad2vec.example
 
-import com.amazonaws.auth.{
-  AWSCredentialsProviderChain,
-  EnvironmentVariableCredentialsProvider,
-  SystemPropertiesCredentialsProvider
-}
+import com.amazonaws.auth.{AWSCredentialsProviderChain, EnvironmentVariableCredentialsProvider, SystemPropertiesCredentialsProvider}
 import org.apache.spark.ml.feature.Word2Vec
 import org.apache.spark.sql.{SaveMode, _}
-
-import me.invkrh.ad2vec.core.Ad2Vec
+import me.invkrh.ad2vec.core.{Ad2Vec, HashingTFIDF}
 
 object Ad2VecExample {
 
@@ -66,6 +61,8 @@ object Ad2VecExample {
       .setMaxIter(1)
     val ad2vec = new Ad2Vec(w2v).setIdCol("ad_id").setDocCol("body")
     val model = ad2vec.fit(raw)
+    
+    val tfidf = new HashingTFIDF("words", "vec")
     val resDF = model.transform(raw)
 
     resultURL foreach resDF.write.mode(SaveMode.Overwrite).parquet

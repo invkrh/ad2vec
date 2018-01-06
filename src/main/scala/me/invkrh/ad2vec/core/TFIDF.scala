@@ -10,6 +10,7 @@ import me.invkrh.ad2vec.util.Hashing.hashingStr
 
 trait TFIDF {
 
+  // TODO: Add setters
   def inputCol: String
   def outputCol: String
 

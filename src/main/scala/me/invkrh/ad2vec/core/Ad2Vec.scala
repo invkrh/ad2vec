@@ -35,7 +35,7 @@ trait Ad2VecBase {
     this
   }
 
-  def copyParamsOf[T <: Ad2VecBase](that: T): Unit = {
+  def copyParamsTo[T <: Ad2VecBase](that: T): Unit = {
     that.setIdCol(this.idCol)
     that.setDocCol(this.docCol)
     that.setLanguage(this.language)
@@ -99,7 +99,7 @@ class Ad2Vec(val word2vec: Word2Vec) extends Ad2VecBase {
     val processed =
       textProcessing(dataSet, removeStopWords = false, replaceNum = false)
     val model = new Ad2VecModel(word2vec.fit(processed))
-    model.copyParamsOf(this)
+    copyParamsTo(model)
     model
   }
 }
